@@ -1,0 +1,27 @@
+# Virtual Environment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Environment variables
+.env
+
+# VS Code
+.vscode/
+
+# Data
+data/raw/
+data/processed/
+data/reports/
+
+# Trained models
+models/
+
+# Logs
+*.log
+
+# Jupyter
+.ipynb_checkpoints/
