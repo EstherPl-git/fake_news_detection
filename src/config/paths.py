@@ -47,7 +47,7 @@ ISOT_TRUE_DATASET = ISOT_DIR / "True.csv"
 
 WELFAKE_DATASET = WELFAKE_DIR / "WELFake_Dataset.csv"
 
-TRAINING_DATASET = WELFAKE_DATASET
+TRAINING_DATASET = PROCESSED_DATA_DIR / "processed_dataset.csv"
 
 
 # ==========================================================

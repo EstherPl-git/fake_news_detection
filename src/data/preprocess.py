@@ -27,9 +27,17 @@ def remove_duplicates(df: pd.DataFrame) -> pd.DataFrame:
 
 def remove_missing_values(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Remove rows with missing values.
+    Remove rows that have missing text or label values.
     """
-    return df.dropna().reset_index(drop=True)
+
+    required_columns = ["text", "label"]
+
+    if "title" in df.columns:
+        required_columns.append("title")
+
+    df = df.dropna(subset=required_columns)
+
+    return df.reset_index(drop=True)
 
 
 def clean_text(text: str) -> str:
@@ -59,13 +67,19 @@ def clean_dataset(df: pd.DataFrame) -> pd.DataFrame:
     if "text" in df.columns:
         df["text"] = df["text"].astype(str).apply(clean_text)
 
-    return df
+    # Remove rows where cleaned text is empty
+    df = df[df["text"].str.strip() != ""]
+
+    # Remove rows where cleaned title is empty
+    df = df[df["title"].str.strip() != ""]
+
+    return df.reset_index(drop=True)
 
 
 def preprocess_dataset(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Complete preprocessing pipeline.
-    """
+
+    if "Unnamed: 0" in df.columns:
+        df = df.drop(columns=["Unnamed: 0"])
 
     print("Removing missing values...")
     df = remove_missing_values(df)
