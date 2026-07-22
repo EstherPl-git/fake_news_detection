@@ -47,6 +47,8 @@ ISOT_TRUE_DATASET = ISOT_DIR / "True.csv"
 
 WELFAKE_DATASET = WELFAKE_DIR / "WELFake_Dataset.csv"
 
+TRAINING_DATASET = WELFAKE_DATASET
+
 
 # ==========================================================
 # Model Directory
@@ -110,6 +112,7 @@ def print_project_paths() -> None:
     print(f"ISOT True         : {ISOT_TRUE_DATASET}")
 
     print(f"WELFake           : {WELFAKE_DATASET}")
+    print(f"Training Dataset  : {TRAINING_DATASET}")
 
     print(f"Models            : {MODELS_DIR}")
     print(f"API               : {API_DIR}")
