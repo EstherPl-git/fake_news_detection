@@ -223,13 +223,15 @@ def build_trainer() -> tuple[Trainer, AutoTokenizer]:
         )
 
     tokenized_train = train_dataset.map(
-        tokenize,
-        batched=True,
+    tokenize,
+    batched=True,
+    remove_columns=["text"],
     )
 
     tokenized_validation = validation_dataset.map(
-        tokenize,
-        batched=True,
+    tokenize,
+    batched=True,
+    remove_columns=["text"],
     )
 
     data_collator = DataCollatorWithPadding(
