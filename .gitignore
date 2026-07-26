@@ -17,8 +17,8 @@ data/raw/
 data/processed/
 data/reports/
 
-# Trained models
-models/
+# Trained model artifacts (repository root only)
+/models/
 
 # Logs
 *.log
