@@ -1,0 +1,29 @@
+# Git
+.git/
+.gitignore
+
+# Virtual environments
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Raw and processed datasets
+data/raw/
+data/processed/
+
+# Training reports
+data/reports/
+
+# Training checkpoints
+models/bert_training/
+
+# Unnecessary files
+.ipynb_checkpoints/
+.vscode/
+*.log
+
+# Documentation that isn't needed inside the image
+docs/
