@@ -12,6 +12,7 @@ Project: TruthLens AI
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import torch
@@ -27,7 +28,12 @@ from src.config.paths import MODELS_DIR
 # Configuration
 # ==========================================================
 
-MODEL_PATH = MODELS_DIR / "bert_fake_news"
+MODEL_ID = os.getenv(
+    "MODEL_ID",
+    "estherp/truthlens-distilbert",
+)
+
+LOCAL_MODEL_PATH = MODELS_DIR / "bert_fake_news"
 
 MAX_LENGTH = 256
 
@@ -63,37 +69,75 @@ class FakeNewsPredictor:
 
     def __init__(
         self,
-        model_path: Path = MODEL_PATH,
+        model_path: Path | None = None,
     ) -> None:
 
-        self.model_path = Path(model_path)
+        # --------------------------------------------------
+        # Determine model source
+        # --------------------------------------------------
 
-        if not self.model_path.exists():
-            raise FileNotFoundError(
-                f"Model directory not found: {self.model_path}"
+        if model_path is not None:
+
+            self.model_source = Path(model_path)
+
+            if not self.model_source.exists():
+                raise FileNotFoundError(
+                    f"Model directory not found: {self.model_source}"
+                )
+
+            print(
+                f"Loading model from local path: "
+                f"{self.model_source}"
             )
+
+            tokenizer_kwargs = {
+                "local_files_only": True,
+            }
+
+            model_kwargs = {
+                "local_files_only": True,
+            }
+
+        else:
+
+            self.model_source = MODEL_ID
+
+            print(
+                f"Loading model from Hugging Face: "
+                f"{self.model_source}"
+            )
+
+            tokenizer_kwargs = {}
+            model_kwargs = {}
+
+        # --------------------------------------------------
+        # Load tokenizer
+        # --------------------------------------------------
 
         print("Loading tokenizer...")
 
         self.tokenizer = AutoTokenizer.from_pretrained(
-            self.model_path,
-            local_files_only=True,
+            self.model_source,
+            **tokenizer_kwargs,
         )
+
+        # --------------------------------------------------
+        # Load model
+        # --------------------------------------------------
 
         print("Loading model...")
 
         self.model = AutoModelForSequenceClassification.from_pretrained(
-            self.model_path,
-            local_files_only=True,
+            self.model_source,
+            **model_kwargs,
         )
 
         self.model.to(DEVICE)
 
         self.model.eval()
 
-        print(f"Model loaded successfully.")
+        print("Model loaded successfully.")
         print(f"Device: {DEVICE}")
-
 
     # ======================================================
     # Prediction
@@ -189,14 +233,12 @@ class FakeNewsPredictor:
 # Create Predictor
 # ==========================================================
 
-
 predictor = FakeNewsPredictor()
 
 
 # ==========================================================
 # Convenience Function
 # ==========================================================
-
 
 def predict_news(text: str) -> dict:
     """
@@ -209,7 +251,6 @@ def predict_news(text: str) -> dict:
 # ==========================================================
 # Manual Test
 # ==========================================================
-
 
 if __name__ == "__main__":
 
@@ -239,4 +280,4 @@ if __name__ == "__main__":
 
     print(
         f"Real : {result['probabilities']['real']:.4f}"
-    )
+    )   

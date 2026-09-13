@@ -40,11 +40,6 @@ RUN pip install --no-cache-dir \
 COPY api ./api
 COPY src ./src
 
-# ----------------------------------------------------------
-# Copy trained model
-# ----------------------------------------------------------
-
-COPY models/bert_fake_news ./models/bert_fake_news
 
 # ----------------------------------------------------------
 # Expose API port
