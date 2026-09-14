@@ -41,8 +41,8 @@ MAX_LENGTH = 256
 # ==========================================================
 
 LABEL_MAPPING = {
-    0: "Fake",
-    1: "Real",
+    0: "Real",
+    1: "Fake",
 }
 
 
@@ -223,8 +223,8 @@ class FakeNewsPredictor:
             "prediction": predicted_label,
             "confidence": confidence,
             "probabilities": {
-                "fake": float(probabilities[0]),
-                "real": float(probabilities[1]),
+                "fake": float(probabilities[1]),
+                "real": float(probabilities[0]),
             },
         }
 
