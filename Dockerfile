@@ -26,20 +26,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # ----------------------------------------------------------
-# Install CPU-only PyTorch
-# ----------------------------------------------------------
-
-RUN pip install --no-cache-dir \
-    torch==2.12.1 \
-    --index-url https://download.pytorch.org/whl/cpu
-
-# ----------------------------------------------------------
 # Copy application source
 # ----------------------------------------------------------
 
 COPY api ./api
 COPY src ./src
-
 
 # ----------------------------------------------------------
 # Expose API port

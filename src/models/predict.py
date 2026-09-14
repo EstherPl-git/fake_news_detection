@@ -3,7 +3,7 @@ predict.py
 
 Inference pipeline for the Fake News Detection project.
 
-Loads the fine-tuned DistilBERT model and tokenizer,
+Loads the quantized ONNX DistilBERT model and tokenizer,
 then predicts whether a news article is fake or real.
 
 Author: Esther
@@ -15,11 +15,9 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-import torch
-from transformers import (
-    AutoModelForSequenceClassification,
-    AutoTokenizer,
-)
+import numpy as np
+import onnxruntime as ort
+from transformers import AutoTokenizer
 
 from src.config.paths import MODELS_DIR
 
@@ -30,10 +28,10 @@ from src.config.paths import MODELS_DIR
 
 MODEL_ID = os.getenv(
     "MODEL_ID",
-    "estherp/truthlens-distilbert",
+    "estherp/truthlens-distilbert-onnx",
 )
 
-LOCAL_MODEL_PATH = MODELS_DIR / "bert_fake_news"
+LOCAL_MODEL_PATH = MODELS_DIR / "truthlens-onnx"
 
 MAX_LENGTH = 256
 
@@ -49,22 +47,13 @@ LABEL_MAPPING = {
 
 
 # ==========================================================
-# Device
-# ==========================================================
-
-DEVICE = torch.device(
-    "cuda" if torch.cuda.is_available() else "cpu"
-)
-
-
-# ==========================================================
 # Model Predictor
 # ==========================================================
 
 
 class FakeNewsPredictor:
     """
-    Loads the trained DistilBERT model and performs predictions.
+    Loads the quantized ONNX model and performs predictions.
     """
 
     def __init__(
@@ -90,14 +79,6 @@ class FakeNewsPredictor:
                 f"{self.model_source}"
             )
 
-            tokenizer_kwargs = {
-                "local_files_only": True,
-            }
-
-            model_kwargs = {
-                "local_files_only": True,
-            }
-
         else:
 
             self.model_source = MODEL_ID
@@ -107,9 +88,6 @@ class FakeNewsPredictor:
                 f"{self.model_source}"
             )
 
-            tokenizer_kwargs = {}
-            model_kwargs = {}
-
         # --------------------------------------------------
         # Load tokenizer
         # --------------------------------------------------
@@ -118,26 +96,43 @@ class FakeNewsPredictor:
 
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.model_source,
-            **tokenizer_kwargs,
+            local_files_only=model_path is not None,
         )
 
         # --------------------------------------------------
-        # Load model
+        # Load ONNX model
         # --------------------------------------------------
 
-        print("Loading model...")
+        print("Loading ONNX model...")
 
-        self.model = AutoModelForSequenceClassification.from_pretrained(
-            self.model_source,
-            **model_kwargs,
+        if model_path is not None:
+            model_file = (
+                self.model_source / "model.int8.onnx"
+            )
+        else:
+            from huggingface_hub import hf_hub_download
+
+            model_file = hf_hub_download(
+                repo_id=self.model_source,
+                filename="model.int8.onnx",
+            )
+
+        self.session = ort.InferenceSession(
+            str(model_file),
+            providers=["CPUExecutionProvider"],
         )
 
-        self.model.to(DEVICE)
+        # --------------------------------------------------
+        # Get supported ONNX input names
+        # --------------------------------------------------
 
-        self.model.eval()
+        self.input_names = {
+            input_info.name
+            for input_info in self.session.get_inputs()
+        }
 
-        print("Model loaded successfully.")
-        print(f"Device: {DEVICE}")
+        print("ONNX model loaded successfully.")
+        print("Execution provider: CPUExecutionProvider")
 
     # ======================================================
     # Prediction
@@ -169,38 +164,43 @@ class FakeNewsPredictor:
 
         inputs = self.tokenizer(
             text,
-            return_tensors="pt",
+            return_tensors="np",
             truncation=True,
             max_length=MAX_LENGTH,
         )
 
-        inputs = {
-            key: value.to(DEVICE)
+        # --------------------------------------------------
+        # Prepare ONNX inputs
+        # --------------------------------------------------
+
+        ort_inputs = {
+            key: value
             for key, value in inputs.items()
+            if key in self.input_names
         }
 
         # --------------------------------------------------
         # Model Prediction
         # --------------------------------------------------
 
-        with torch.no_grad():
+        outputs = self.session.run(
+            None,
+            ort_inputs,
+        )
 
-            outputs = self.model(
-                **inputs
-            )
+        logits = outputs[0][0]
 
         # --------------------------------------------------
         # Convert logits to probabilities
         # --------------------------------------------------
 
-        probabilities = torch.softmax(
-            outputs.logits,
-            dim=-1,
-        )
+        logits = logits - np.max(logits)
 
-        probabilities = probabilities[
-            0
-        ].cpu().numpy()
+        exp_logits = np.exp(logits)
+
+        probabilities = (
+            exp_logits / exp_logits.sum()
+        )
 
         # --------------------------------------------------
         # Select predicted class
@@ -266,18 +266,24 @@ if __name__ == "__main__":
     print("PREDICTION")
     print("=" * 60)
 
-    print(f"Prediction : {result['prediction']}")
     print(
-        f"Confidence : {result['confidence']:.4f}"
+        f"Prediction : {result['prediction']}"
+    )
+
+    print(
+        f"Confidence : "
+        f"{result['confidence']:.4f}"
     )
 
     print()
     print("Probabilities:")
 
     print(
-        f"Fake : {result['probabilities']['fake']:.4f}"
+        f"Fake : "
+        f"{result['probabilities']['fake']:.4f}"
     )
 
     print(
-        f"Real : {result['probabilities']['real']:.4f}"
-    )   
+        f"Real : "
+        f"{result['probabilities']['real']:.4f}"
+    )
