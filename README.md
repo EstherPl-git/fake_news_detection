@@ -1,46 +1,125 @@
 # TruthLens AI
 
-## Fake News Detection using Machine Learning and DistilBERT
+### AI-Powered Fake News Detection
 
-TruthLens AI is a machine learning application that classifies news articles as **Fake** or **Real**.
+TruthLens AI is an end-to-end machine learning application that classifies news articles as **Fake** or **Real** using a fine-tuned **DistilBERT** transformer model.
 
-The project compares a traditional machine learning baseline with a fine-tuned **DistilBERT** transformer model and exposes the final model through a **FastAPI REST API**. The application is also containerized using **Docker**.
+The project follows a complete machine learning workflow — from dataset analysis and preprocessing to model training, evaluation, optimized inference, API development, containerization, and cloud deployment.
+
+A traditional **TF-IDF + Logistic Regression** model was developed as a baseline and compared with the fine-tuned DistilBERT model. For production inference, the transformer model was converted to **ONNX** and dynamically quantized to **INT8**, significantly reducing its size and making CPU-based deployment practical.
+
+The application provides an interactive **Streamlit frontend** connected to a **FastAPI REST API**, with the optimized model hosted on **Hugging Face** and the application services deployed on **Render**.
+
+---
+
+## Live Demo
+
+Try the deployed application:
+
+**[TruthLens AI — Live Demo](https://truthlens-ai-1z0g.onrender.com)**
+
+The application provides an interactive interface where users can enter news text and receive:
+
+- Fake or Real prediction
+- Prediction confidence
+- Fake probability
+- Real probability
+
+### Key Features
+
+- **Machine Learning Classification** — Detects whether news content is likely Fake or Real.
+- **DistilBERT Transformer** — Uses a fine-tuned DistilBERT model for text classification.
+- **Baseline Comparison** — Compares transformer performance against a TF-IDF + Logistic Regression baseline.
+- **Optimized Inference** — Uses ONNX Runtime with dynamic INT8 quantization for lightweight CPU inference.
+- **REST API** — Provides predictions through a FastAPI backend.
+- **Interactive Web Interface** — Built with Streamlit.
+- **Containerized Deployment** — Backend is packaged using Docker.
+- **Cloud Deployment** — Frontend and backend are deployed on Render, with the optimized model hosted on Hugging Face.
+- **Automated Testing** — Includes API and prediction tests using pytest.
 
 ---
 
 ## Project Overview
 
-The goal of TruthLens AI is to build an end-to-end fake news detection system covering:
+TruthLens AI was developed as an end-to-end machine learning project covering the complete workflow from raw data to a deployed prediction service.
 
-- Dataset analysis and comparison
-- Data preprocessing
-- Exploratory Data Analysis (EDA)
-- Traditional machine learning baseline
-- Transformer-based model training
-- Model evaluation
-- Prediction pipeline
-- REST API
-- Automated testing
-- Docker containerization
+The project follows these stages:
+
+1. **Dataset Analysis** — Compared the ISOT and WELFake datasets before selecting the dataset used for final training.
+2. **Data Preprocessing** — Cleaned the selected dataset and prepared the text and labels for model training.
+3. **Exploratory Data Analysis** — Examined label distribution, missing values, and article-length characteristics.
+4. **Baseline Modeling** — Built a TF-IDF + Logistic Regression classifier as a traditional machine learning benchmark.
+5. **Transformer Fine-Tuning** — Fine-tuned DistilBERT for binary fake-news classification.
+6. **Model Evaluation** — Evaluated the models using accuracy, precision, recall, and F1 score.
+7. **Inference Optimization** — Converted the trained transformer to ONNX and applied dynamic INT8 quantization.
+8. **API Development** — Exposed the prediction pipeline through a FastAPI REST API.
+9. **Containerization** — Packaged the backend using Docker.
+10. **Cloud Deployment** — Deployed the frontend and backend on Render and hosted the optimized model on Hugging Face.
+
+---
+
+## System Architecture
+
+The production system is organized into separate frontend, backend, and model-inference components:
+
+```text
+                         User
+                           |
+                           v
+                +---------------------+
+                |    Streamlit UI     |
+                |      (Render)       |
+                +----------+----------+
+                           |
+                           | HTTP POST
+                           v
+                +---------------------+
+                |     FastAPI API     |
+                |      (Render)       |
+                +----------+----------+
+                           |
+                           v
+                +---------------------+
+                |     Prediction      |
+                |       Pipeline      |
+                +----------+----------+
+                           |
+                           v
+                +---------------------+
+                |    ONNX Runtime     |
+                |  INT8 Quantized     |
+                |     DistilBERT      |
+                +----------+----------+
+                           |
+                           v
+                +---------------------+
+                |  Hugging Face Model |
+                |      Repository     |
+                +---------------------+
+```
+
+The frontend communicates with the backend through HTTP, while the backend handles tokenization, model inference, probability calculation, and prediction formatting.
+
+The production model uses **ONNX Runtime with CPU execution**, allowing the application to run without requiring a GPU.
 
 ---
 
 ## Dataset
 
-Two datasets were considered:
+Two publicly available fake-news datasets were considered during the project:
 
-1. ISOT Fake News Dataset
-2. WELFake Dataset
+1. **ISOT Fake News Dataset**
+2. **WELFake Dataset**
 
-After comparing the datasets, the **WELFake Dataset** was selected for the final training pipeline.
+The datasets were compared based on factors such as dataset size, diversity, and suitability for the classification task. The **WELFake Dataset** was selected for the final training pipeline.
 
-The dataset contains news articles with:
+The dataset contains the following relevant fields:
 
 - `title`
 - `text`
 - `label`
 
-The processed dataset used for training contains:
+After preprocessing, the final dataset used for model development contains:
 
 **62,592 articles**
 
@@ -48,91 +127,85 @@ The dataset-selection analysis is documented in:
 
 `docs/dataset_decision.md`
 
----
+### Label Encoding
 
-## Data Preprocessing
+The WELFake labels used by the training pipeline are:
 
-The preprocessing pipeline includes:
-
-- Removing missing values
-- Removing duplicate rows
-- Cleaning newline, carriage-return, and tab characters
-- Removing unnecessary whitespace
-- Preparing text and labels for model training
-
-The processed dataset is generated by:
-
-`src/data/preprocess.py`
-
-Processed data is intentionally excluded from Git because it is a generated data artifact.
+0 → Real
+1 → Fake
 
 ---
 
 ## Exploratory Data Analysis
 
-EDA was performed to understand the dataset before model training.
+Exploratory Data Analysis (EDA) was performed to understand the structure and characteristics of the dataset before model training.
 
-The project includes analysis of:
+The analysis focused on:
 
-- Label distribution
-- Missing values
-- Article length distribution
+- Distribution of Fake and Real news articles
+- Missing values across the dataset
+- Duplicate records
+- Distribution of article and title lengths
+- Basic text characteristics
 
-EDA code:
+These checks helped identify data-quality issues and provided a better understanding of the classification problem.
 
-`src/visualization/eda.py`
+The EDA notebooks and generated analysis outputs are available in:
 
-Generated reports and figures are stored locally under:
-
-`data/reports/`
-
-These generated files are excluded from Git.
+`notebooks/`
 
 ---
 
 ## Baseline Model
 
-A traditional machine learning baseline was developed using:
+A traditional machine learning approach was implemented as a baseline for comparison with the transformer-based model.
 
-- TF-IDF
-- Logistic Regression
+The baseline pipeline uses:
 
-The baseline achieved:
+**TF-IDF (Term Frequency–Inverse Document Frequency) + Logistic Regression**
 
-**Accuracy: 93.67%**
+TF-IDF converts the news text into numerical feature vectors based on the importance of words within the dataset. Logistic Regression then uses these features to classify each article as Fake or Real.
 
-This baseline provides a reference point for evaluating the transformer model.
+### Baseline Performance
 
-Training code:
+The baseline model achieved approximately:
 
-`src/models/train_baseline.py`
+| Metric | Score |
+|---|---:|
+| Accuracy | 93.67% |
+
+This baseline provides a useful benchmark for evaluating the improvement obtained from the fine-tuned DistilBERT model.
+
+The baseline implementation is located in:
+
+`src/models/`
 
 ---
 
 ## Transformer Model
 
-The final model uses:
+For the final classification model, the project uses **DistilBERT**, a lightweight transformer architecture based on BERT.
 
-**DistilBERT (`distilbert-base-uncased`)**
-
-The model was fine-tuned for binary classification:
-
-    0 → Fake
-    1 → Real
-
-Training was performed using a GPU environment.
+The model was fine-tuned using the `distilbert-base-uncased` pretrained checkpoint for binary classification of news articles.
 
 ### Training Configuration
 
-- Model: DistilBERT
-- Maximum sequence length: 256
-- Batch size: 16
-- Learning rate: 2e-5
-- Epochs: 2
-- Train/validation split: 80/20
-- Random state: 42
+| Parameter | Value |
+|---|---|
+| Base Model | `distilbert-base-uncased` |
+| Maximum Sequence Length | 256 tokens |
+| Batch Size | 16 |
+| Learning Rate | `2e-5` |
+| Epochs | 2 |
+| Train / Validation Split | 80 / 20 |
+| Random State | 42 |
+| Training Environment | Google Colab T4 GPU |
 
-### Validation Results
+The model was trained on the preprocessed WELFake dataset using the Hugging Face Transformers training framework.
+
+### Model Performance
+
+The fine-tuned DistilBERT model achieved the following validation performance:
 
 | Metric | Score |
 |---|---:|
@@ -141,263 +214,406 @@ Training was performed using a GPU environment.
 | Recall | 98.71% |
 | F1 Score | 99.01% |
 
-The transformer model substantially outperformed the Logistic Regression baseline on the validation set.
+The results show a substantial improvement over the TF-IDF + Logistic Regression baseline.
 
-Training code:
+The training and evaluation workflow is documented in:
 
-`src/models/train_transformer.py`
+`notebooks/`
 
+---
+
+## Inference Optimization
+
+The original fine-tuned DistilBERT model was optimized for production deployment to reduce memory usage and make CPU-based inference practical.
+
+The optimization pipeline consists of two stages:
+
+1. **ONNX Conversion** — The trained transformer model was converted from the PyTorch-based format to ONNX.
+2. **INT8 Quantization** — Dynamic INT8 quantization was applied to the ONNX model using ONNX Runtime.
+
+### Model Size Reduction
+
+| Model | Approximate Size |
+|---|---:|
+| Original ONNX Model | 267.9 MB |
+| INT8 Quantized Model | 67.3 MB |
+
+This reduced the model size by approximately **75%**.
+
+The optimized model is hosted on the Hugging Face Hub and is downloaded by the backend when required.
+
+### Production Inference
+
+The production prediction pipeline uses:
+
+```text
+Input Text
+    ↓
+DistilBERT Tokenizer
+    ↓
+ONNX Runtime
+    ↓
+INT8 Quantized DistilBERT
+    ↓
+Logits
+    ↓
+Softmax Probabilities
+    ↓
+Fake / Real Prediction
+```
 ---
 
 ## Prediction Pipeline
 
-The trained model can classify new news text and return:
+The prediction pipeline is responsible for loading the optimized model, processing input text, running inference, and returning the final classification result.
 
-- Prediction
-- Confidence
-- Fake probability
-- Real probability
+The pipeline performs the following steps:
 
-Example:
+1. **Load the tokenizer** associated with the fine-tuned DistilBERT model.
+2. **Tokenize the input text** with truncation and a maximum sequence length of 256 tokens.
+3. **Run ONNX inference** using ONNX Runtime.
+4. **Convert model logits into probabilities** using the softmax function.
+5. **Determine the predicted class** from the highest probability.
+6. **Map the model class to the final label**:
+   - `0 → Real`
+   - `1 → Fake`
+7. **Return the prediction, confidence, and class probabilities.**
 
-    {
-      "prediction": "Fake",
-      "confidence": 0.9847,
-      "probabilities": {
-        "fake": 0.9847,
-        "real": 0.0153
-      }
-    }
+### Prediction Response
 
-Prediction code:
+A prediction returned by the backend follows this structure:
+
+```json
+{
+  "prediction": "Fake",
+  "confidence": 0.9995,
+  "probabilities": {
+    "fake": 0.9995,
+    "real": 0.0005
+  }
+}
+```
+
+The inference implementation is located in:
 
 `src/models/predict.py`
+
+The prediction pipeline is shared by the API layer, keeping model inference separate from the web interface and API logic.
 
 ---
 
 ## REST API
 
-TruthLens AI provides a FastAPI REST API.
+TruthLens AI exposes the prediction functionality through a **FastAPI REST API**.
 
-### Start the API
+### API Endpoints
 
-    python -m uvicorn api.main:app --reload
+| Method | Endpoint   |         Description                  |
+|--------|----------- |------------------------------------- |
+| `GET`  | `/health`  | Checks whether the API is running    |
+| `POST` | `/predict` | Classifies news text as Fake or Real |
 
-The API will run at:
+### Run the API Locally
 
-`http://127.0.0.1:8000`
+Start the FastAPI server with:
 
-### Swagger Documentation
+```bash
+python -m uvicorn api.main:app --reload
+```
 
-Open:
+The API will be available at:
 
-`http://127.0.0.1:8000/docs`
+```text
+http://127.0.0.1:8000
+```
 
-### Health Check
+### Swagger API Documentation
 
-    GET /health
+FastAPI automatically provides interactive API documentation at:
 
-Example response:
+```text
+http://127.0.0.1:8000/docs
+```
 
-    {
-      "status": "healthy"
-    }
+### Prediction Request
 
-### Prediction
+Send a `POST` request to `/predict` with the news text:
 
-    POST /predict
+```json
+{
+  "text": "Scientists announced a new discovery after years of research."
+}
+```
 
-Request:
+### Example Response
 
-    {
-      "text": "Scientists announced a new discovery after years of research."
-    }
+```json
+{
+  "prediction": "Fake",
+  "confidence": 0.98,
+  "probabilities": {
+    "fake": 0.98,
+    "real": 0.02
+  }
+}
+```
 
-Example response:
+The API layer is implemented in:
 
-    {
-      "prediction": "Fake",
-      "confidence": 0.98,
-      "probabilities": {
-        "fake": 0.98,
-        "real": 0.02
-      }
-    }
+`api/`
 
 ---
 
 ## Docker
 
-The application is containerized using Docker.
+The FastAPI backend is containerized using **Docker** for reproducible deployment.
 
-The production container uses **CPU-only PyTorch** because GPU acceleration is not required for inference.
+The Docker image uses a lightweight Python 3.11 base image and installs only the dependencies required for production inference and API serving.
 
-### Build the Image
+### Build the Docker Image
 
-    docker build -t truthlens-ai .
+```bash
+docker build -t truthlens-ai .
+```
 
 ### Run the Container
 
-    docker run --name truthlens-api -p 8000:8000 truthlens-ai
+```bash
+docker run --name truthlens-api -p 8000:8000 truthlens-ai
+```
 
 The API will then be available at:
 
-`http://localhost:8000`
+```text
+http://localhost:8000
+```
 
-Swagger documentation:
+Swagger documentation is available at:
 
-`http://localhost:8000/docs`
+```text
+http://localhost:8000/docs
+```
+
+The Docker configuration is defined in:
+
+`Dockerfile`
 
 ---
 
 ## Testing
 
-Automated tests are implemented using `pytest`.
+Automated tests are implemented using **pytest** to verify the API and prediction pipeline.
 
 The test suite covers:
 
 - Health endpoint
 - Prediction endpoint
-- Invalid input
-- Missing input
-- Prediction label
-- Prediction confidence
-- Class probabilities
+- Empty input validation
+- Missing input validation
+- Prediction label validation
+- Prediction confidence validation
+- Class probability validation
 - Probability consistency
 
-Run the tests using:
+### Run the Tests
 
-    pytest -v
+From the project root, run:
 
-Current test result:
+```bash
+pytest -v
+```
 
-**8 passed**
+### Current Test Result
+
+```text
+8 passed
+```
+
+The tests are located in:
+
+`tests/`
 
 ---
 
 ## Project Structure
 
-    fake_news_detection/
-    │
-    ├── api/
-    │   ├── main.py
-    │   ├── routes.py
-    │   └── schemas.py
-    │
-    ├── data/
-    │   ├── raw/
-    │   ├── processed/
-    │   └── reports/
-    │
-    ├── docs/
-    │   └── dataset_decision.md
-    │
-    ├── models/
-    │   └── bert_fake_news/
-    │
-    ├── src/
-    │   ├── config/
-    │   │   └── paths.py
-    │   │
-    │   ├── data/
-    │   │   ├── audit.py
-    │   │   ├── compare_datasets.py
-    │   │   ├── loader.py
-    │   │   └── preprocess.py
-    │   │
-    │   ├── models/
-    │   │   ├── evaluate.py
-    │   │   ├── predict.py
-    │   │   ├── train_baseline.py
-    │   │   └── train_transformer.py
-    │   │
-    │   ├── utils/
-    │   │   └── helpers.py
-    │   │
-    │   └── visualization/
-    │       └── eda.py
-    │
-    ├── tests/
-    │   ├── test_api.py
-    │   └── test_predict.py
-    │
-    ├── .dockerignore
-    ├── .gitignore
-    ├── Dockerfile
-    ├── LICENSE
-    ├── README.md
-    └── requirements.txt
+```text
+fake_news_detection/
+|
++-- api/
+|   +-- main.py
+|   +-- routes.py
+|   +-- schemas.py
+|
++-- data/
+|   +-- raw/
+|   +-- processed/
+|   +-- reports/
+|
++-- docs/
+|   +-- dataset_decision.md
+|
++-- models/
+|
++-- src/
+|   +-- config/
+|   |   +-- paths.py
+|   |
+|   +-- data/
+|   |   +-- audit.py
+|   |   +-- compare_datasets.py
+|   |   +-- loader.py
+|   |   +-- preprocess.py
+|   |
+|   +-- models/
+|   |   +-- evaluate.py
+|   |   +-- predict.py
+|   |   +-- train_baseline.py
+|   |   +-- train_transformer.py
+|   |
+|   +-- utils/
+|   |   +-- helpers.py
+|   |
+|   +-- visualization/
+|       +-- eda.py
+|
++-- tests/
+|   +-- test_api.py
+|   +-- test_predict.py
+|
++-- .dockerignore
++-- .gitignore
++-- Dockerfile
++-- LICENSE
++-- README.md
++-- requirements.txt
++-- requirements-frontend.txt
++-- app.py
+```
+
+The project is organized to keep data processing, model development, API functionality, testing, and frontend components separated.
+
+Large datasets, generated artifacts, and trained model files are excluded from Git and are not stored directly in the repository.
 
 ---
 
 ## Technologies Used
 
+### Programming & Data Processing
+
 - Python
 - Pandas
 - NumPy
 - Scikit-learn
-- PyTorch
+
+### Machine Learning & NLP
+
 - Hugging Face Transformers
-- Hugging Face Datasets
+- DistilBERT
+- PyTorch
+- ONNX
+- ONNX Runtime
+
+### Backend & API
+
 - FastAPI
 - Pydantic
 - Uvicorn
+
+### Frontend
+
+- Streamlit
+
+### Deployment & Infrastructure
+
 - Docker
+- Render
+- Hugging Face Hub
+
+### Testing & Version Control
+
 - Pytest
-- Git / GitHub
+- Git
+- GitHub
 
 ---
 
-## Model Deployment Architecture
+## Deployment Architecture
 
-    User
-     │
-     ▼
-    FastAPI
-     │
-     ▼
-    Prediction Pipeline
-     │
-     ▼
-    Fine-tuned DistilBERT
-     │
-     ├── Fake probability
-     └── Real probability
-     │
-     ▼
-    JSON Response
+The application is deployed as separate frontend and backend services.
 
-The application is packaged inside a Docker container for reproducible deployment.
+```text
+                         User
+                           |
+                           v
+              +-----------------------+
+              |   Streamlit Frontend  |
+              |        Render         |
+              +-----------+-----------+
+                          |
+                          | HTTPS
+                          v
+              +-----------------------+
+              |     FastAPI Backend   |
+              |        Render         |
+              +-----------+-----------+
+                          |
+                          v
+              +-----------------------+
+              |    ONNX Runtime       |
+              |    INT8 DistilBERT    |
+              |    CPU Inference      |
+              +-----------+-----------+
+                          |
+                          v
+              +-----------------------+
+              |    Hugging Face Hub   |
+              |  Optimized Model      |
+              +-----------------------+
+```
+
+### Production Services
+
+| Component |    Platform      |           Purpose              |
+|-----------|----------------- |--------------------------------|
+| Frontend  | Render           | Streamlit web application      |
+| Backend   | Render           | FastAPI prediction API         |
+| Model     | Hugging Face Hub | Hosts the optimized ONNX model |
+| Inference | ONNX Runtime     | CPU-based model inference      |
+
+The frontend communicates with the backend using HTTP requests. The backend loads the optimized model and performs inference using ONNX Runtime.
+
+The production deployment does not require a GPU.
 
 ---
 
-## Repository and Data Policy
+## Repository & Data Policy
 
-Large or generated files are intentionally excluded from Git, including:
+Large datasets, generated artifacts, and trained model files are intentionally excluded from the Git repository.
 
-    data/raw/
-    data/processed/
-    data/reports/
-    models/
-    venv/
+The following directories are excluded through `.gitignore`:
 
-The source code, configuration, API, tests, and documentation are tracked in Git.
-
-The trained model is required locally for inference and is not committed directly to the repository.
+```text
+data/raw/
+data/processed/
+data/reports/
+models/
+venv/
+```
 
 ---
 
 ## Future Improvements
 
-Potential future improvements include:
+Potential improvements to the current system include:
 
-- Testing on additional external datasets
-- Improving robustness against unseen news sources
-- Model explainability
-- Confidence calibration
-- Monitoring model performance after deployment
-- Adding authentication and rate limiting to the API
-- Exploring model compression for more resource-efficient deployment
+- Testing the model on additional external datasets to evaluate generalization.
+- Improving robustness against unseen news sources and writing styles.
+- Adding model explainability techniques to help users understand predictions.
+- Calibrating prediction confidence for more reliable probability estimates.
+- Monitoring model performance and prediction behavior after deployment.
+- Adding authentication and rate limiting to the API.
+- Exploring further model compression and optimization techniques for more resource-efficient deployment.
 
 ---
 
@@ -405,4 +621,4 @@ Potential future improvements include:
 
 **Esther**
 
-TruthLens AI — Fake News Detection Project
+TruthLens AI - Fake News Detection Project
